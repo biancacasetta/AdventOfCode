@@ -24,13 +24,13 @@ def find_shortest_path(distances):
     cities = set(distances.keys())
 
     for route in permutations(cities):
-        total_shortest = 0
-        total_longest = 0
+        total_shortest, total_longest = 0, 0
 
         for i, city in enumerate(route):
             if i <= len(route) - 2:
-                total_shortest += distances[city][route[i+1]]
-                total_longest += distances[city][route[i+1]] 
+                next = route[i+1]
+                total_shortest += distances[city][next]
+                total_longest += distances[city][next]
         
         if total_shortest < shortest:
             shortest = total_shortest
