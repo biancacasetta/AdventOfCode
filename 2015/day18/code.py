@@ -1,5 +1,7 @@
-WIDTH = 6
-HEIGHT = 6
+WIDTH = 100
+HEIGHT = 100
+NEIGHBORS = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
+ALWAYS_ON = {(0, 0), (0, WIDTH-1), (HEIGHT-1, 0), (HEIGHT-1, WIDTH-1)}
 
 def read_file(filename):
     with open(filename, 'r') as file:
@@ -12,37 +14,68 @@ def read_file(filename):
         
     return file_content
 
-def parse_lights(file):
-    lights = {'on': [], 'off': []}
-    for i, line in enumerate(file):
-        l = []
-        for j, char in enumerate(line):
-            status = 'on' if char == '#' else 'off'
-            lights[status] += [(i, j)]
+def parse_lights(file, part2):
+    lights = [[cell == '#' for cell in line] for line in file]
+
+    if part2:
+        for i, j in ALWAYS_ON:
+            lights[i][j] = True
+
     return lights
 
-def get_neighbours(cell):
-    neighbors = []
-    for i in range(cell[0]-1, cell[0]+2):
-        for j in range(cell[1]-1, cell[1]+2):
-            c = (i, j)
-            if is_out_of_bounds((i, j)):
-                continue
+def count_on_neighbours(i, j, lights):
+    on = 0
 
-            neighbors.append(c)
+    for di, dj in NEIGHBORS:
+        ni = i + di
+        nj = j + dj
+        if is_within_bounds(ni, nj):
+            on += lights[ni][nj]
         
-    return neighbors
+    return on
 
-def is_out_of_bounds(cell):
-    return not (0 <= cell[0] < HEIGHT and 0 <= cell[1] < WIDTH)
+def is_within_bounds(i, j):
+    return 0 <= i < HEIGHT and 0 <= j < WIDTH
 
-def get_next_state(light):
-    pass
+def do_one_cycle(lights, part2):
+    new_lights = [[False] * WIDTH for i in range(HEIGHT)]
+
+    if part2:
+        for i, j in ALWAYS_ON:
+            new_lights[i][j] = True
+
+    for i in range(HEIGHT):
+        for j in range(WIDTH):
+            if part2 and (i, j) in ALWAYS_ON:
+                    continue
+
+            on = count_on_neighbours(i, j, lights)
+            
+            if lights[i][j]:
+                new_lights[i][j] = (on == 2 or on == 3)
+            else:
+                new_lights[i][j] = (on == 3)
+
+    return new_lights
+
+def cycle(lights, cycles, part2):
+    for i in range(cycles):
+        lights = do_one_cycle(lights, part2)
+    
+    return lights
 
 def main():
-    file = read_file('test_input.txt')
-    lights = parse_lights(file)
-    print(lights)
+    file = read_file('input.txt')
+
+    # kinda ugly with all the part2 booleans
+    lights1 = parse_lights(file, False)
+    lights2 = parse_lights(file, True)
+
+    final_lights1 = cycle(lights1, 100, False)
+    final_lights2 = cycle(lights2, 100, True)
+
+    print(f'Part 1: {sum(sum(row) for row in final_lights1)}')
+    print(f'Part 2: {sum(sum(row) for row in final_lights2)}')
 
 if __name__ == '__main__':
     main()
